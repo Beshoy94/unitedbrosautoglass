@@ -49,69 +49,97 @@ if (contactForm) {
 }
 
 
-// Initialize Vehicle Dropdowns
+// Initialize Vehicle Dropdowns using NHTSA API
 document.addEventListener('DOMContentLoaded', () => {
     const yearSelect = document.getElementById('vehicle-year');
     const makeSelect = document.getElementById('vehicle-make');
     const modelSelect = document.getElementById('vehicle-model');
 
-    let currentYearData = null;
+    if (!yearSelect || !makeSelect || !modelSelect) return;
 
-    if (yearSelect && makeSelect && modelSelect) {
-        // Populate Years (1992 to 2026)
-        for (let i = 2026; i >= 1992; i--) {
-            const option = document.createElement('option');
-            option.value = i;
-            option.textContent = i;
-            yearSelect.appendChild(option);
-        }
+    // 1. Populate Years (1990 to Current + 1)
+    const currentYear = new Date().getFullYear();
+    for (let i = currentYear + 1; i >= 1990; i--) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = i;
+        yearSelect.appendChild(option);
+    }
 
-        // When Year is selected, fetch Make data for that year
-        yearSelect.addEventListener('change', async () => {
-            const year = yearSelect.value;
-            makeSelect.disabled = true;
-            modelSelect.disabled = true;
-            makeSelect.innerHTML = '<option value="" disabled selected>Loading...</option>';
-            modelSelect.innerHTML = '<option value="" disabled selected>Model</option>';
+    // 2. Fetch All Makes (Combined Passenger, Truck, MPV)
+    async function fetchMakes() {
+        makeSelect.innerHTML = '<option value="" disabled selected>Loading Makes...</option>';
+        try {
+            // We fetch the basic list of makes that produce Passenger Cars, Trucks, and MPVs
+            const types = ['passenger%20car', 'truck', 'multipurpose%20passenger%20vehicle%20(mpv)'];
+            let allMakes = new Set();
 
-            try {
-                const response = await fetch(`assets/car-data/${year}.json`);
-                if (!response.ok) throw new Error('Data not found');
-                currentYearData = await response.json();
-
-                // Populate Makes
-                makeSelect.innerHTML = '<option value="" disabled selected>Make</option>';
-                Object.keys(currentYearData).sort().forEach(make => {
-                    const option = document.createElement('option');
-                    option.value = make;
-                    option.textContent = make;
-                    makeSelect.appendChild(option);
+            for (const type of types) {
+                const res = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/GetMakesForVehicleType/${type}?format=json`);
+                const json = await res.json();
+                json.Results.forEach(item => {
+                    if (item.MakeName) allMakes.add(item.MakeName.trim().toUpperCase());
                 });
-                makeSelect.disabled = false;
-            } catch (error) {
-                console.error('Error loading car data:', error);
-                makeSelect.innerHTML = '<option value="" disabled selected>Error loading makes</option>';
             }
-        });
 
-        // When Make is selected, update and enable Model
-        makeSelect.addEventListener('change', () => {
-            const selectedMake = makeSelect.value;
+            const sortedMakes = Array.from(allMakes).sort();
+
+            makeSelect.innerHTML = '<option value="" disabled selected>Make</option>';
+            sortedMakes.forEach(make => {
+                const option = document.createElement('option');
+                option.value = make;
+                option.textContent = make;
+                makeSelect.appendChild(option);
+            });
+            makeSelect.disabled = false;
+        } catch (error) {
+            console.error('Error fetching makes:', error);
+            makeSelect.innerHTML = '<option value="" disabled selected>Error loading makes</option>';
+        }
+    }
+
+    // Initialize makes list immediately
+    fetchMakes();
+
+    // 3. Handle Year/Make Changes for Models
+    async function updateModels() {
+        const year = yearSelect.value;
+        const make = makeSelect.value;
+
+        if (!year || !make) return;
+
+        modelSelect.disabled = true;
+        modelSelect.innerHTML = '<option value="" disabled selected>Loading Models...</option>';
+
+        try {
+            const response = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMakeYear/make/${encodeURIComponent(make)}/modelyear/${year}?format=json`);
+            const json = await response.json();
+
+            const models = json.Results.map(r => r.Model_Name).sort();
+
             modelSelect.innerHTML = '<option value="" disabled selected>Model</option>';
-
-            if (currentYearData && currentYearData[selectedMake]) {
-                currentYearData[selectedMake].forEach(model => {
+            if (models.length === 0) {
+                const option = document.createElement('option');
+                option.value = "Other";
+                option.textContent = "Model Not Found (Enter in Message)";
+                modelSelect.appendChild(option);
+            } else {
+                models.forEach(model => {
                     const option = document.createElement('option');
                     option.value = model;
                     option.textContent = model;
                     modelSelect.appendChild(option);
                 });
-                modelSelect.disabled = false;
-            } else {
-                modelSelect.disabled = true;
             }
-        });
+            modelSelect.disabled = false;
+        } catch (error) {
+            console.error('Error fetching models:', error);
+            modelSelect.innerHTML = '<option value="" disabled selected>Error loading models</option>';
+        }
     }
+
+    yearSelect.addEventListener('change', updateModels);
+    makeSelect.addEventListener('change', updateModels);
 });
 
 // Mobile Menu Toggle (Simplified)
