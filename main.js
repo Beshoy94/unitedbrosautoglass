@@ -66,31 +66,109 @@ document.addEventListener('DOMContentLoaded', () => {
         yearSelect.appendChild(option);
     }
 
-    // 2. Fetch All Makes (Combined Passenger, Truck, MPV)
+    // 2. Fetch All Makes (Filtered for Relevance)
+    const RELEVANT_MAKES = [
+        "ACURA",
+        "ALFA ROMEO",
+        "AMC",
+        "ASTON MARTIN",
+        "AUDI",
+        "BENTLEY",
+        "BMW",
+        "BUICK",
+        "CADILLAC",
+        "CHEVROLET",
+        "CHRYSLER",
+        "DELOREAN",
+        "DODGE",
+        "FERRARI",
+        "FIAT",
+        "FISKER",
+        "FORD",
+        "GENESIS",
+        "GMC",
+        "HONDA",
+        "HUMMER",
+        "HYUNDAI",
+        "INFINITI",
+        "ISUZU",
+        "JAGUAR",
+        "JEEP",
+        "KARMA",
+        "KIA",
+        "KOENIGSEGG",
+        "LAMBORGHINI",
+        "LAND ROVER",
+        "LEXUS",
+        "LINCOLN",
+        "LOTUS",
+        "LUCID",
+        "MASERATI",
+        "MAYBACH",
+        "MAZDA",
+        "MCLAREN",
+        "MERCEDES-BENZ",
+        "MERCURY",
+        "MINI",
+        "MITSUBISHI",
+        "NISSAN",
+        "PEUGEOT",
+        "POLESTAR",
+        "PONTIAC",
+        "PORSCHE",
+        "RAM",
+        "RENAULT",
+        "RIVIAN",
+        "ROLLS-ROYCE",
+        "SAAB",
+        "SATURN",
+        "SCION",
+        "SHELBY",
+        "SMART",
+        "SUBARU",
+        "SUZUKI",
+        "TESLA",
+        "TOYOTA",
+        "VINFAST",
+        "VOLKSWAGEN",
+        "VOLVO"
+    ];
+
     async function fetchMakes() {
         makeSelect.innerHTML = '<option value="" disabled selected>Loading Makes...</option>';
         try {
-            // We fetch the basic list of makes that produce Passenger Cars, Trucks, and MPVs
             const types = ['passenger%20car', 'truck', 'multipurpose%20passenger%20vehicle%20(mpv)'];
-            let allMakes = new Set();
+            let fetchedMakes = new Set();
 
             for (const type of types) {
                 const res = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/GetMakesForVehicleType/${type}?format=json`);
                 const json = await res.json();
                 json.Results.forEach(item => {
-                    if (item.MakeName) allMakes.add(item.MakeName.trim().toUpperCase());
+                    if (item.MakeName) {
+                        const name = item.MakeName.trim().toUpperCase();
+                        if (RELEVANT_MAKES.includes(name)) {
+                            fetchedMakes.add(name);
+                        }
+                    }
                 });
             }
 
-            const sortedMakes = Array.from(allMakes).sort();
+            const sortedMakes = Array.from(fetchedMakes).sort();
 
             makeSelect.innerHTML = '<option value="" disabled selected>Make</option>';
             sortedMakes.forEach(make => {
                 const option = document.createElement('option');
                 option.value = make;
-                option.textContent = make;
+                option.textContent = make.charAt(0) + make.slice(1).toLowerCase(); // Capitalize first letter
                 makeSelect.appendChild(option);
             });
+
+            // Add "Other" as catch-all
+            const otherOpt = document.createElement('option');
+            otherOpt.value = "OTHER";
+            otherOpt.textContent = "Other (Enter in Message)";
+            makeSelect.appendChild(otherOpt);
+
             makeSelect.disabled = false;
         } catch (error) {
             console.error('Error fetching makes:', error);
