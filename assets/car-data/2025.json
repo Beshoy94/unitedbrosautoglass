@@ -1,0 +1,62 @@
+{
+  "Audi": [
+    "Q6 e-tron"
+  ],
+  "Cadillac": [
+    "CT5",
+    "Escalade IQ",
+    "OPTIQ"
+  ],
+  "Chevrolet": [
+    "Silverado EV",
+    "Suburban",
+    "Tahoe"
+  ],
+  "Dodge": [
+    "Charger"
+  ],
+  "Fisker": [
+    "Alaska"
+  ],
+  "Genesis": [
+    "G80",
+    "GV80",
+    "GV80 Coupe"
+  ],
+  "GMC": [
+    "Yukon"
+  ],
+  "Kia": [
+    "Carnival"
+  ],
+  "Lexus": [
+    "UX"
+  ],
+  "Lucid": [
+    "Gravity"
+  ],
+  "MINI": [
+    "Countryman",
+    "Hardtop 2 Door"
+  ],
+  "Ram": [
+    "1500 Crew Cab",
+    "1500 REV",
+    "1500 Ramcharger"
+  ],
+  "Subaru": [
+    "Forester"
+  ],
+  "Toyota": [
+    "Camry",
+    "Crown Signia"
+  ],
+  "Volkswagen": [
+    "ID.7",
+    "ID.Buzz"
+  ],
+  "Volvo": [
+    "EX30",
+    "EX90"
+  ]
+}

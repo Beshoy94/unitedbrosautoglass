@@ -48,35 +48,6 @@ if (contactForm) {
     });
 }
 
-// Vehicle Data
-const vehicleData = {
-    "Acura": ["MDX", "RDX", "TLX", "ILX"],
-    "Audi": ["A3", "A4", "A6", "Q3", "Q5", "Q7"],
-    "BMW": ["3 Series", "5 Series", "7 Series", "X1", "X3", "X5"],
-    "Buick": ["Enclave", "Encore", "Envision"],
-    "Cadillac": ["Escalade", "XT4", "XT5", "XT6", "CT4", "CT5"],
-    "Chevrolet": ["Camaro", "Colorado", "Equinox", "Silverado", "Tahoe", "Traverse"],
-    "Chrysler": ["300", "Pacifica"],
-    "Dodge": ["Challenger", "Charger", "Durango"],
-    "Ford": ["Bronco", "Edge", "Escape", "Explorer", "F-150", "Mustang"],
-    "GMC": ["Acadia", "Canyon", "Sierra", "Terrain", "Yukon"],
-    "Honda": ["Accord", "Civic", "CR-V", "Odyssey", "Pilot"],
-    "Hyundai": ["Elantra", "Kona", "Palisade", "Santa Fe", "Sonata", "Tucson"],
-    "Infiniti": ["Q50", "QX50", "QX60", "QX80"],
-    "Jeep": ["Cherokee", "Compass", "Gladiator", "Grand Cherokee", "Wrangler"],
-    "Kia": ["Forte", "K5", "Sorento", "Soul", "Sportage", "Telluride"],
-    "Lexus": ["ES", "GX", "IS", "NX", "RX", "UX"],
-    "Lincoln": ["Aviator", "Corsair", "Navigator", "Nautilus"],
-    "Mazda": ["CX-5", "CX-9", "CX-30", "CX-50", "Mazda3"],
-    "Mercedes-Benz": ["C-Class", "E-Class", "S-Class", "GLA", "GLC", "GLE"],
-    "Nissan": ["Altima", "Frontier", "Pathfinder", "Rogue", "Sentra", "Titan"],
-    "Ram": ["1500", "2500", "3500"],
-    "Subaru": ["Ascent", "Crosstrek", "Forester", "Impreza", "Outback"],
-    "Tesla": ["Model 3", "Model S", "Model X", "Model Y"],
-    "Toyota": ["4Runner", "Camry", "Corolla", "Highlander", "Prius", "RAV4", "Tacoma", "Tundra"],
-    "Volkswagen": ["Atlas", "Golf", "Jetta", "Passat", "Tiguan"],
-    "Volvo": ["S60", "S90", "V60", "XC40", "XC60", "XC90"]
-};
 
 // Initialize Vehicle Dropdowns
 document.addEventListener('DOMContentLoaded', () => {
@@ -84,27 +55,42 @@ document.addEventListener('DOMContentLoaded', () => {
     const makeSelect = document.getElementById('vehicle-make');
     const modelSelect = document.getElementById('vehicle-model');
 
+    let currentYearData = null;
+
     if (yearSelect && makeSelect && modelSelect) {
-        // Populate Years (2010 to current + 1)
-        const currentYear = new Date().getFullYear();
-        for (let i = currentYear + 1; i >= 2010; i--) {
+        // Populate Years (1992 to 2026)
+        for (let i = 2026; i >= 1992; i--) {
             const option = document.createElement('option');
             option.value = i;
             option.textContent = i;
             yearSelect.appendChild(option);
         }
 
-        // When Year is selected, enable Make
-        yearSelect.addEventListener('change', () => {
-            makeSelect.disabled = false;
-            if (makeSelect.options.length === 1) {
+        // When Year is selected, fetch Make data for that year
+        yearSelect.addEventListener('change', async () => {
+            const year = yearSelect.value;
+            makeSelect.disabled = true;
+            modelSelect.disabled = true;
+            makeSelect.innerHTML = '<option value="" disabled selected>Loading...</option>';
+            modelSelect.innerHTML = '<option value="" disabled selected>Model</option>';
+
+            try {
+                const response = await fetch(`assets/car-data/${year}.json`);
+                if (!response.ok) throw new Error('Data not found');
+                currentYearData = await response.json();
+
                 // Populate Makes
-                Object.keys(vehicleData).sort().forEach(make => {
+                makeSelect.innerHTML = '<option value="" disabled selected>Make</option>';
+                Object.keys(currentYearData).sort().forEach(make => {
                     const option = document.createElement('option');
                     option.value = make;
                     option.textContent = make;
                     makeSelect.appendChild(option);
                 });
+                makeSelect.disabled = false;
+            } catch (error) {
+                console.error('Error loading car data:', error);
+                makeSelect.innerHTML = '<option value="" disabled selected>Error loading makes</option>';
             }
         });
 
@@ -113,8 +99,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const selectedMake = makeSelect.value;
             modelSelect.innerHTML = '<option value="" disabled selected>Model</option>';
 
-            if (vehicleData[selectedMake]) {
-                vehicleData[selectedMake].sort().forEach(model => {
+            if (currentYearData && currentYearData[selectedMake]) {
+                currentYearData[selectedMake].forEach(model => {
                     const option = document.createElement('option');
                     option.value = model;
                     option.textContent = model;
