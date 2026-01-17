@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://unitedbrosautoglass.com/sitemap.xml
